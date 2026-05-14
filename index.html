@@ -1,0 +1,176 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Koleso</title>
+<style>
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    margin:0;
+    padding-top:20px;
+}
+canvas{
+    background:#222;
+    border-radius:50%;
+    border:6px solid white;
+}
+button{
+    margin-top:20px;
+    padding:15px 35px;
+    font-size:20px;
+    border:none;
+    border-radius:10px;
+    background:#4a90e2;
+    color:white;
+    cursor:pointer;
+}
+button:hover{
+    background:#357abd;
+}
+
+#winner{
+    margin-top:20px;
+    font-size:28px;
+    font-weight:bold;
+    min-height: 40px;
+}
+.arrow{
+    font-size:50px;
+    color:red;
+    margin-bottom:-10px;
+    position: relative;
+    z-index: 10;
+}
+#CasinoXusrav{
+    color: red;
+    font-size: 200%;
+}
+</style>
+</head>
+<body>
+
+<div class="arrow">▼</div>
+<canvas id="wheel" width="600" height="600"></canvas>
+<br>
+<button id="spin-btn" onclick="playSound()">КРУТИТЬ</button>
+<audio id="mySound" src="sound.mp3"></audio>
+<div id="winner"></div>
+<div id="CasinoXusrav">Casino Xusrav</div>
+
+<script>
+const names = [
+    "Guzal Abdukarimova", "Rustam Gizatullin", "Muxsinaxon Tursunaliyeva",
+    "Muhammadsolih Sayfiddinov", "Abdulaziz Abdug‘afforov", "Dinora Abduvaxobova",
+    "Temurbek Xamidullayev", "Olimjon Xusniddinov", "Xusravxon Saloxidinov",
+    "Nurjamal Izbaskanova", "Muxlisa Abdixoliqova", "Olimjon Toxirjonov",
+    "Kamila Sobitjonova", "Jasmina Ahmedova", "Boburmirzo Rahmonov",
+    "Shahzoda Muxammadaliyeva", "Abdulaziz Sattorov", "Husan Ne’matov",
+    "Shahzodaxon Nazrullayeva", "Afruza Muzaffarova", "Ulug‘bek To‘lqinov",
+    "Munisa Shodmonova", "Muhammadyusuf Mamadaliyev", "Ruxshona Abdubositova",
+    "Bekzod Abdullaev", "Faxriddin Abdusalimov"
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const spinBtn = document.getElementById("spin-btn");
+const winnerText = document.getElementById("winner");
+
+const total = names.length;
+const arc = (Math.PI * 2) / total;
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+const radius = canvas.width / 2;
+
+let currentAngle = 0;
+let spinCount = 0;
+const afruzaIndex = names.indexOf("Afruza Muzaffarova");
+function playSound() {
+    const sound = document.getElementById("mySound");
+    sound.play();
+    setTimeout(() => {
+        sound.pause();
+        sound.currentTime = 0;
+    }, 5300);
+}
+function drawWheel(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let i=0; i<total; i++){
+        const angle = currentAngle + i * arc;
+        ctx.beginPath();
+        ctx.moveTo(centerX,centerY);
+        ctx.fillStyle = i % 2 === 0 ? "#4a90e2" : "#5cacee";
+        ctx.arc(centerX, centerY, radius, angle, angle + arc);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(centerX,centerY);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "white";
+        ctx.font = "bold 13px Arial";
+        ctx.fillText(names[i], radius - 10, 5);
+        ctx.restore();
+    }
+}
+
+function getRotationDistance(index) {
+    const pointer = -Math.PI / 2;
+    
+
+    const sectorCenter = index * arc + arc / 2;
+    
+    let targetAngle = pointer - sectorCenter;
+    
+    const normalizedStart = currentAngle % (Math.PI * 2);
+    
+    let distance = (targetAngle - normalizedStart) % (Math.PI * 2);
+    if (distance <= 0) distance += Math.PI * 2;
+    
+    return distance + (Math.PI * 2 * 6);
+}
+
+function spin(){
+    spinBtn.disabled = true;
+    winnerText.innerHTML = "Крутится...";
+    spinCount++;
+
+    let selectedIndex;
+    if(spinCount % 5 === 0){
+        selectedIndex = afruzaIndex;
+    } else {
+        do {
+            selectedIndex = Math.floor(Math.random() * total);
+        } while(selectedIndex === afruzaIndex);
+    }
+
+    const startAngle = currentAngle;
+    const rotationDistance = getRotationDistance(selectedIndex);
+    const duration = 5000;
+    const startTime = performance.now();
+
+    function animate(now){
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+
+        currentAngle = startAngle + rotationDistance * ease;
+        drawWheel();
+
+        if(t < 1){
+            requestAnimationFrame(animate);
+        } else {
+            spinBtn.disabled = false;
+            winnerText.innerHTML = "Победитель: " + names[selectedIndex];
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+drawWheel();
+spinBtn.addEventListener("click", spin);
+</script>
+</body>
+</html>
